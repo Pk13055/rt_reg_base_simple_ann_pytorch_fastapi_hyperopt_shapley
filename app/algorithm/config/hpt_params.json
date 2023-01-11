@@ -3,10 +3,10 @@
     "name": "n_estimators",
     "short_desc": "Number of trees in the forest",
     "default": 100,
-    "type": "real",
+    "type": "int",
     "range_low": 100,
     "range_high": 1000,
-    "search_type": "log-uniform",
+    "search_type": "uniform",
     "run_HPO": true
   },
 

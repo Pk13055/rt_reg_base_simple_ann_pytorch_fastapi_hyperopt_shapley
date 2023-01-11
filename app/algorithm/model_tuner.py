@@ -1,68 +1,51 @@
-import numpy as np
-import uuid
-import time
-from skopt import gp_minimize
-from skopt.space import Real, Categorical, Integer
-from skopt.utils import use_named_args
-
 import os
-import warnings
 import sys
+import time
+import uuid
+import warnings
+
+import numpy as np
+from hyperopt import fmin, hp, tpe
 from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 
-import algorithm.utils as utils
 import algorithm.model_trainer as model_trainer
+import algorithm.utils as utils
 
 # get model configuration parameters
 model_cfg = utils.get_model_config()
 
 
 def get_hpt_space(hpt_specs):
-    param_grid = []
+    param_grid = {}
     for hp_obj in hpt_specs:
         if hp_obj["run_HPO"] == False:
-            param_grid.append(Categorical([hp_obj["default"]], name=hp_obj["name"]))
+            val = hp.choice(hp_obj["name"], [hp_obj["default"]])
         elif hp_obj["type"] == "categorical":
-            param_grid.append(
-                Categorical(hp_obj["categorical_vals"], name=hp_obj["name"])
-            )
+            val = hp.choice(hp_obj["name"], hp_obj["categorical_vals"])
         elif hp_obj["type"] == "int" and hp_obj["search_type"] == "uniform":
-            param_grid.append(
-                Integer(
-                    hp_obj["range_low"],
-                    hp_obj["range_high"],
-                    prior="uniform",
-                    name=hp_obj["name"],
-                )
+            val = hp.quniform(
+                hp_obj["name"], hp_obj["range_low"], hp_obj["range_high"], 1
             )
+
         elif hp_obj["type"] == "int" and hp_obj["search_type"] == "log-uniform":
-            param_grid.append(
-                Integer(
-                    hp_obj["range_low"],
-                    hp_obj["range_high"],
-                    prior="log-uniform",
-                    name=hp_obj["name"],
-                )
+            val = hp.loguniform(
+                hp_obj["name"],
+                hp_obj["range_low"],
+                hp_obj["range_high"],
             )
+
         elif hp_obj["type"] == "real" and hp_obj["search_type"] == "uniform":
-            param_grid.append(
-                Real(
-                    hp_obj["range_low"],
-                    hp_obj["range_high"],
-                    prior="uniform",
-                    name=hp_obj["name"],
-                )
+            val = hp.quniform(
+                hp_obj["name"], hp_obj["range_low"], hp_obj["range_high"], 1
             )
+
         elif hp_obj["type"] == "real" and hp_obj["search_type"] == "log-uniform":
-            param_grid.append(
-                Real(
-                    hp_obj["range_low"],
-                    hp_obj["range_high"],
-                    prior="log-uniform",
-                    name=hp_obj["name"],
-                )
+            val = hp.loguniform(
+                hp_obj["name"],
+                hp_obj["range_low"],
+                hp_obj["range_high"],
             )
         else:
             raise Exception(
@@ -70,6 +53,7 @@ def get_hpt_space(hpt_specs):
                 Undefined value type: {hp_obj['type']} or search_type: {hp_obj['search_type']}. \
                 Verify hpt_params.json file."
             )
+        param_grid.update({hp_obj["name"]: val})
     return param_grid
 
 
@@ -138,12 +122,9 @@ def tune_hyperparameters(
     hpt_space = get_hpt_space(hpt_specs)
     default_hps = get_default_hps(hpt_specs)
 
-    # Scikit-optimize objective function
-    @use_named_args(hpt_space)
-    def objective(**hyperparameters):
+    def objective(hyperparameters):
         """Build a model from this hyper parameter permutation and evaluate its performance"""
 
-        print("hyperparameters", hyperparameters)
         # set random seeds
         utils.set_seeds()
 
@@ -163,7 +144,7 @@ def tune_hyperparameters(
         model = model_trainer.train_model(train_X, train_y, None, None, hyperparameters)
 
         # evaluate the model
-        score = model.evaluate(valid_X, valid_y)
+        score: float = model.evaluate(valid_X, valid_y)
 
         # Our optimizing metric is the model loss fn
         opt_metric = score
@@ -184,20 +165,18 @@ def tune_hyperparameters(
         utils.save_json(os.path.join(hpt_results_path, model_name + ".json"), result)
         # Save the best model parameters found so far in case the HPO job is killed
         save_best_parameters(hpt_results_path, hyper_param_path)
-        return opt_metric
+        return -opt_metric
 
     n_initial_points = int(max(1, min(num_trials / 3, 5)))
     n_calls = max(
         2, num_trials
     )  # gp_minimize needs at least 2 trials, or it throws an error
-    gp_ = gp_minimize(
+    gp_ = fmin(
         objective,  # the objective function to minimize
         hpt_space,  # the hyperparameter space
-        x0=default_hps,  # the initial parameters to test
-        acq_func="EI",  # the acquisition function
-        n_initial_points=n_initial_points,
-        n_calls=n_calls,  # the number of total evaluations of f(x), including n_initial_points
-        random_state=0,
+        algo=tpe.suggest,
+        max_evals=n_calls,  # the number of total evaluations of f(x), including n_initial_points
+        rstate=np.random.default_rng(0),
     )
 
     end = time.time()
