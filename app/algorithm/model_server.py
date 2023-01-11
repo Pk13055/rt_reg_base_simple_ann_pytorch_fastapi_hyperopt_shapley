@@ -1,12 +1,12 @@
-import numpy as np, pandas as pd
-import os
-from shap import Explainer
 import json
+import os
 
-import algorithm.utils as utils
-import algorithm.preprocessing.pipeline as pipeline
 import algorithm.model.regressor as regressor
-
+import algorithm.preprocessing.pipeline as pipeline
+import algorithm.utils as utils
+import numpy as np
+import pandas as pd
+from shap import Explainer
 
 # get model configuration parameters
 model_cfg = utils.get_model_config()
@@ -70,8 +70,8 @@ class ModelServer:
 
         if data.shape[0] > self.MAX_LOCAL_EXPLANATIONS:
             msg = f"""Warning!
-            Maximum {self.MAX_LOCAL_EXPLANATIONS} explanation(s) allowed at a time. 
-            Given {data.shape[0]} samples. 
+            Maximum {self.MAX_LOCAL_EXPLANATIONS} explanation(s) allowed at a time.
+            Given {data.shape[0]} samples.
             Selecting top {self.MAX_LOCAL_EXPLANATIONS} sample(s) for explanations."""
             print(msg)
 
@@ -117,7 +117,7 @@ class ModelServer:
         # ------------------------------------------------------
         """
         To plot the shapley values:
-        you can only plot one sample at a time. 
+        you can only plot one sample at a time.
         if you want to plot all samples. create a loop and use the index (sample_idx)
         """
         # sample_idx = 4
@@ -126,5 +126,5 @@ class ModelServer:
         # shap_values.data = shap_values.data[sample_idx]
         # shap.plots.waterfall(shap_values)
         # ------------------------------------------------------
-        explanations = json.dumps(explanations, cls=utils.NpEncoder, indent=2)
+        # explanations = json.dumps(explanations, cls=utils.NpEncoder, indent=2)
         return explanations

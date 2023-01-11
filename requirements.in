@@ -1,0 +1,21 @@
+# web application
+python-multipart
+fastapi
+uvicorn[standard]
+# data manipulation
+pandas==1.3.5
+numpy==1.20.0
+numba==0.53.0
+# feature extraction
+hyperopt
+scikit-learn==1.0
+feature-engine==1.2.0
+scikit-optimize==0.9.0
+llvmlite==0.36.0
+shap==0.41.0
+# base docker image installs pytorch/pytorch:1.12.0 so no need to install pytorch through requirements.txt
+# but if you want to run locally on a windows machine, uncomment the following lines
+# for mac/linux, get a similar version (1.11 or 1.12)
+# --find-links https://download.pytorch.org/whl/torch_stable.html
+# torch==1.11.0+cpu
+# torchvision==0.12.0+cpu

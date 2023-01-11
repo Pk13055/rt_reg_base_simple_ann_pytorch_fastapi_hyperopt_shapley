@@ -1,18 +1,24 @@
-import os, shutil
+#!/usr/bin/env python3
+# coding: utf-8
+
+import os
+import pprint
+import shutil
 import sys
 import time
-import pandas as pd, numpy as np
-import pprint
-from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+
+import numpy as np
+import pandas as pd
 from scipy.stats import linregress
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 sys.path.insert(0, "./../app")
-import algorithm.utils as utils
-import algorithm.model_trainer as model_trainer
+import algorithm.model.regressor as regressor
 import algorithm.model_server as model_server
+import algorithm.model_trainer as model_trainer
 import algorithm.model_tuner as model_tuner
 import algorithm.preprocessing.pipeline as pipeline
-import algorithm.model.regressor as regressor
+import algorithm.utils as utils
 
 inputs_path = "./ml_vol/inputs/"
 
@@ -137,7 +143,7 @@ def train_and_save_algo():
     print("done with training")
 
 
-def load_and_test_algo():
+def load_and_test_algo(dataset_name: str):
     # Read data
     test_data = utils.get_data(test_data_path)
     # read data config
@@ -157,13 +163,13 @@ def load_and_test_algo():
     else:
         local_explanations = None
     # score the results
-    test_key = get_test_key()
+    test_key = get_test_key(dataset_name)
     results = score(test_key, predictions, data_schema)
     print("done with predictions")
     return results, local_explanations
 
 
-def get_test_key():
+def get_test_key(dataset_name: str) -> pd.DataFrame:
     test_key = pd.read_csv(
         f"{local_datapath}/{dataset_name}/{dataset_name}_test_key.csv"
     )
@@ -252,10 +258,9 @@ def run_train_and_test(dataset_name, run_hpt, num_hpt_trials):
         run_HPT(num_hpt_trials)  # run HPT and save tuned hyperparameters
     train_and_save_algo()  # train the model and save
 
-    (
-        results,
-        local_explanations,
-    ) = load_and_test_algo()  # load the trained model and get predictions on test data
+    results, local_explanations = load_and_test_algo(
+        dataset_name
+    )  # load the trained model and get predictions on test data
 
     end = time.time()
     elapsed_time_in_minutes = np.round((end - start) / 60.0, 2)
@@ -271,7 +276,7 @@ def run_train_and_test(dataset_name, run_hpt, num_hpt_trials):
     return results, local_explanations
 
 
-if __name__ == "__main__":
+def main():
 
     num_hpt_trials = 20
     run_hpt_list = [False, True]
@@ -305,3 +310,7 @@ if __name__ == "__main__":
             print("-" * 60)
 
         save_test_outputs(all_results, run_hpt, dataset_name=None)
+
+
+if __name__ == "__main__":
+    main()

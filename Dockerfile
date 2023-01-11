@@ -6,22 +6,20 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
          ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-
-COPY ./requirements.txt .
-RUN pip3 install -r requirements.txt 
-
 # the base pytorch image sets workdir to opt/workspace
 # The source algo expects the app to be loaded to opt/
 # so need to change workdir back to opt
 WORKDIR /opt
 
-COPY app ./app
+COPY ./requirements.* ./
+RUN pip3 install -r requirements.txt 
 
+COPY app ./app
 WORKDIR /opt/app
 
 ENV PYTHONUNBUFFERED=TRUE
 ENV PYTHONDONTWRITEBYTECODE=TRUE
-ENV PATH="/opt/app:${PATH}"
+ENV PATH="/opt/app:${PATH}" 
 
 RUN chmod +x train \
  && chmod +x predict \

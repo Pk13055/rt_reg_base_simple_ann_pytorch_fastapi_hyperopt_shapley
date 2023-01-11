@@ -50,7 +50,7 @@ HPT includes choosing the optimal values for learning rate for the SDG optimizer
 
 During the model development process, the algorithm was trained and evaluated on a variety of datasets such as abalone, auto_prices, computer_activity, heart_disease, white_wine, and ailerons.
 
-The main programming language is Python. Other tools include PyTorch for main algorithm, feature-engine and Scikit-Learn for preprocessing, Scikit-Learn for calculating model metrics, Scikit-Optimize for HPT, Flask + Nginx + gunicorn for web service.
+The main programming language is Python. Other tools include PyTorch for main algorithm, feature-engine and Scikit-Learn for preprocessing, Scikit-Learn for calculating model metrics, Scikit-Optimize for HPT, Flask + Nginx + uvicorn for web service.
 
 The web service provides three endpoints-
 
